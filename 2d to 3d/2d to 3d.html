@@ -1,0 +1,1491 @@
+<html>
+  <head>
+    <title>2d转3d</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 添加Three.js依赖 -->
+    <!-- 替换Three.js资源链接为可靠的CDN源 -->
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <style>
+      @font-face {
+        font-family: "font1";
+        src: url(fonts/汉仪清庭-55简.ttf);
+      }
+
+      @font-face {
+        font-family: "font2";
+        src: url(fonts/逼格锐线粗体简2.0.TTF);
+      }
+
+      /* 首页样式 */
+      .homepage {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        /* 使用flexbox布局 */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background-image: url("img/1.png");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        position: absolute;
+        /* 修改为绝对定位 */
+        top: 0;
+        /* 确保顶部对齐 */
+        left: 0;
+        /* 确保左边对齐 */
+        margin: 0;
+        /* 去除任何默认边距 */
+        overflow: hidden;
+      }
+
+      /* 开始体验按钮 */
+      .start-btn {
+        width: 300px;
+        height: 100px;
+        margin-top: 350px;
+        margin-left: -1680px;
+        background: transparent url("img/start.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+      }
+
+      .start-btn:hover {
+        transform: scale(1.02);
+      }
+
+      /* 内容页通用样式 */
+      .content-page {
+        min-height: 100vh;
+        padding: 100px;
+        position: relative;
+      }
+
+      /* 不同页面的布局样式 */
+      /* 第一页 */
+      .page-1 {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        /* 使用flexbox布局 */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background-image: url("img/bg.png");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .font-1 {
+        font-family: "font2";
+        color: #f3db92;
+        font-size: 80px;
+      }
+
+      .area1 {
+        width: 1200px;
+        height: 500px;
+        margin-top: 50px;
+        background-color: rgba(142, 142, 142, 0.4);
+        border-radius: 20px;
+        /* 新增网格布局 */
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        /* 6列 */
+        grid-template-rows: repeat(2, 1fr);
+        /* 2行 */
+        gap: 30px;
+        /* 图标间距 */
+        padding: 40px;
+        box-sizing: border-box;
+      }
+
+      .zodiac-item {
+        display: flex;
+        flex-direction: column;
+        opacity: 1 !important;
+        /* 垂直排列图标和文字 */
+        align-items: center;
+        gap: 5px;
+        /* 图标和文字间距 */
+      }
+
+      /* 图标图片样式 */
+      .zodiac-icon {
+        width: 160px;
+        height: 160px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+        transition: transform 0.3s ease;
+      }
+
+      /*文字*/
+      .zodiac-label {
+        color: #f3db92;
+        /* 使用和标题相同的金色 */
+        font-family: "font2";
+        font-size: 24px;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        white-space: nowrap;
+        /* 防止文字换行 */
+        transition: all 0.3s ease;
+        user-select: none;
+        /* 禁止文字被选中 */
+      }
+
+      /* 选中状态样式 */
+      .zodiac-item.selected {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 15px #f3db92);
+      }
+
+      .zodiac-item.selected .zodiac-icon {
+        border: 3px solid #f3db92;
+        border-radius: 20px;
+      }
+
+      .zodiac-item.selected .zodiac-label {
+        color: #ffd700;
+        font-weight: bold;
+      }
+
+      .homebtn {
+        width: 180px;
+        height: 60px;
+        margin-left: -500px;
+        margin-top: 50px;
+        background: transparent url("img/返回主页.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+        opacity: 0.9;
+      }
+
+      .nextbtn1 {
+        width: 180px;
+        height: 60px;
+        margin-left: 500px;
+        margin-top: -60px;
+        background: transparent url("img/下一步.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+        opacity: 0.9;
+      }
+
+      /* 第二页 */
+      .page-2 {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        /* 使用flexbox布局 */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background-image: url("img/bg.png");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .font-2 {
+        font-family: "font2";
+        color: #f3db92;
+        font-size: 80px;
+      }
+
+      .area2 {
+        width: 1200px;
+        height: 500px;
+        margin-top: 30px;
+        background-color: rgba(142, 142, 142, 0.4);
+        border-radius: 20px;
+        overflow-x: auto;
+        /* 允许横向滚动 */
+        display: flex;
+        align-items: center;
+        padding: 0 100px;
+        /* 留出选中放大空间 */
+        scroll-snap-type: x mandatory;
+        /* 启用滚动吸附 */
+        scroll-behavior: smooth;
+        /* 平滑滚动 */
+      }
+
+      /* 模型容器 */
+      .model-container {
+        display: flex;
+        gap: 50px;
+        /* 模型间距 */
+        padding: 0 300px;
+        /* 居中补偿 */
+      }
+
+      /* 单个模型项 */
+      .model-item {
+        scroll-snap-align: center;
+        /* 滚动吸附到中心 */
+        flex: 0 0 300px;
+        /* 固定宽度 */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s ease;
+      }
+
+      /* 模型图片 */
+      .model-image {
+        width: 300px;
+        height: 300px;
+        border-radius: 20px;
+        object-fit: cover;
+        border: 3px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      /* 模型名称 */
+      .model-name {
+        margin-top: 30px;
+        font-size: 25px;
+        color: #f3db92;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      /* 选中状态 */
+      .model-item.selected .model-image {
+        transform: scale(1.15);
+        border-color: #f3db92;
+        box-shadow: 0 0 20px rgba(243, 219, 146, 0.5);
+      }
+
+      .model-item.selected .model-name {
+        font-size: 30px;
+        color: #f3db92;
+        font-weight: bold;
+      }
+
+      /* 隐藏滚动条 */
+      .area2::-webkit-scrollbar {
+        display: none;
+      }
+
+      .lastbtn2 {
+        width: 180px;
+        height: 60px;
+        margin-left: -500px;
+        margin-top: 50px;
+        background: transparent url("img/上一步.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+      }
+
+      .nextbtn2 {
+        width: 180px;
+        height: 60px;
+        margin-left: 500px;
+        margin-top: -60px;
+        background: transparent url("img/下一步.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+        opacity: 0.9;
+      }
+
+      /* 第三页 */
+      .page-3 {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        /* 使用flexbox布局 */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background-image: url("img/bg.png");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .font-3 {
+        font-family: "font2";
+        color: #f3db92;
+        font-size: 80px;
+      }
+
+      /* 修改后的第三页样式 */
+      .area3 {
+        width: 1000px; /* 加宽容器 */
+        height: 700px; /* 增加高度 */
+        margin-top: 30px;
+        background-color: rgba(142, 142, 142, 0.4);
+        border-radius: 20px;
+        padding: 20px; /* 添加内边距 */
+      }
+
+      /* 新的网格布局 */
+      .result-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 两列 */
+        grid-template-rows: repeat(2, 1fr); /* 两行 */
+        gap: 30px; /* 间距 */
+        height: 100%;
+      }
+
+      .generated-image {
+        width: 300px;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 3px solid rgba(243, 219, 146, 0.3); /* 默认半透明边框 */
+        transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          border-color 0.3s ease;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .generated-image.selected {
+        border-color: #f3db92;
+        box-shadow: 0 0 15px rgba(243, 219, 146, 0.5);
+        transform: scale(1.05);
+      }
+
+      .selection-indicator {
+        position: absolute;
+        color: #f3db92;
+        font-size: 40px;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+
+      .image-container {
+        position: relative;
+        display: inline-block;
+        transition: all 0.3s ease;
+        margin: 10px;
+        transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          z-index 0.3s ease;
+      }
+
+      .image-container.selected .generated-image {
+        border: 3px solid #f3db92 !important;
+        box-shadow: 0 0 20px rgba(243, 219, 146, 0.8);
+        filter: drop-shadow(0 0 10px rgba(243, 219, 146, 0.6));
+      }
+
+      .image-container:hover {
+        transform: scale(1.03);
+        z-index: 2;
+      }
+
+      .image-container:hover .generated-image {
+        filter: brightness(1.1);
+      }
+
+      @keyframes glow {
+        from {
+          opacity: 0.6;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .lastbtn3 {
+        width: 180px;
+        height: 60px;
+        margin-left: -500px;
+        margin-top: 50px;
+        background: transparent url("img/重新生成.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+      }
+
+      .nextbtn3 {
+        width: 180px;
+        height: 60px;
+        margin-left: 500px;
+        margin-top: -60px;
+        background: transparent url("img/生成3d模型.png") no-repeat center
+          center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+        opacity: 0.9;
+      }
+
+      /* 第四页 */
+      .page-4 {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        /* 使用flexbox布局 */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background-image: url("img/bg.png");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .area4 {
+        width: 800px;
+        height: 600px;
+        margin-top: 30px;
+        background-color: rgba(142, 142, 142, 0.4);
+        border-radius: 20px;
+        position: relative;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+      }
+
+      .error-message {
+        color: #ff4444;
+        font-size: 24px;
+        padding: 20px;
+      }
+
+      .loading-status {
+        color: #f3db92;
+        font-size: 24px;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .loading-status div {
+        margin: 10px 0;
+      }
+
+      .error-message button {
+        margin-top: 10px;
+        padding: 8px 20px;
+        background: rgba(243, 219, 146, 0.3);
+        border: 1px solid #f3db92;
+        color: #f3db92;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .error-message button:hover {
+        background: rgba(243, 219, 146, 0.5);
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .rebuildbtn4 {
+        width: 180px;
+        height: 60px;
+        margin-left: -500px;
+        margin-top: 50px;
+        background: transparent url("img/重新生成.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+      }
+
+      .savebtn4 {
+        width: 180px;
+        height: 60px;
+        margin-left: 500px;
+        margin-top: -60px;
+        background: transparent url("img/保存模型.png") no-repeat center center;
+        background-size: contain;
+        border: none;
+        cursor: pointer;
+        text-indent: -9999px;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <!-- 首页 -->
+      <div class="homepage" v-if="showHomepage">
+        <button class="start-btn" @click="startBrowsing"></button>
+      </div>
+
+      <!-- 内容页 -->
+      <div v-else>
+        <!-- 第一页内容 -->
+        <div class="page-1" v-if="currentPage === 1">
+          <div class="font-1">请选择您的生肖</div>
+          <div class="area1">
+            <!-- 第一排6个图标 -->
+            <div
+              class="zodiac-item"
+              v-for="(item, index) in zodiacLabels.slice(0,6)"
+              :class="{ selected: selectedZodiac === (index+1) }"
+              @click="selectZodiac(index+1)"
+            >
+              <img :src="`img/zodiac-${index+1}.png`" class="zodiac-icon" />
+              <span class="zodiac-label">{{ item.label }}</span>
+            </div>
+
+            <!-- 第二排6个图标 -->
+            <div
+              class="zodiac-item"
+              v-for="(item, index) in zodiacLabels.slice(6,12)"
+              :class="{ selected: selectedZodiac === (index+7) }"
+              @click="selectZodiac(index+7)"
+            >
+              <img :src="`img/zodiac-${index+7}.png`" class="zodiac-icon" />
+              <span class="zodiac-label">{{ item.label }}</span>
+            </div>
+          </div>
+          <button class="homebtn" @click="returnToHome"></button>
+          <button class="nextbtn1" @click="nextPage"></button>
+        </div>
+
+        <!-- 第二页内容 -->
+        <div class="page-2" v-if="currentPage === 2">
+          <div class="font-2">请选择您喜欢的风格</div>
+          <!-- 模型展示区域 -->
+          <div class="area2" ref="scrollArea" @scroll="handleScroll">
+            <div class="model-container">
+              <div
+                class="model-item"
+                v-for="(model, index) in models"
+                :key="index"
+                :class="{ selected: selectedModel === index }"
+              >
+                <img
+                  :src="model.image"
+                  class="model-image"
+                  @click="scrollToModel(index)"
+                />
+                <span class="model-name">{{ model.name }}</span>
+              </div>
+            </div>
+          </div>
+          <button class="lastbtn2" @click="prevPage"></button>
+          <button class="nextbtn2" @click="nextPage"></button>
+        </div>
+
+        <!-- 第三页内容 -->
+        <div class="page-3" v-if="currentPage === 3">
+          <div class="font-3">请选择您满意的图片</div>
+          <div class="area3">
+            <div v-if="generationTasks.length === 0" class="loading-status">
+              <div class="loader"></div>
+              <p>正在生成图片...大约需要30s</p>
+            </div>
+
+            <div v-else class="result-grid">
+              <div
+                v-for="(img, index) in generationTasks[0]?.images?.slice(0,4) || []"
+                :key="index"
+                @click="selectImage(index)"
+                class="image-container"
+                :class="{ selected: selectedImageIndex === index }"
+              >
+                <img
+                  :src="img"
+                  class="generated-image"
+                  :class="{ glowing: selectedImageIndex === index }"
+                />
+                <div
+                  v-if="selectedImageIndex === index"
+                  class="selection-indicator"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <button class="lastbtn3" @click="prevPage">重新生成</button>
+          <button class="nextbtn3" @click="handleModelGeneration">
+            生成3d模型
+          </button>
+        </div>
+
+        <!--第四页内容-->
+        <!-- 修改第四页内容 -->
+        <div class="page-4" v-if="currentPage === 4">
+          <div v-if="threeJSError" class="error-message">
+            {{ threeJSError }}
+            <button @click="retryLoading">重试</button>
+          </div>
+
+          <div v-else>
+            <div class="loading-status">
+              <div v-if="!modelLoaded && !threeJSError">
+                <div class="loader"></div>
+                <p>正在初始化3D引擎...大约需要10s</p>
+              </div>
+            </div>
+            <div class="area4" ref="modelContainer"></div>
+            <!-- 仅保留一个容器 -->
+          </div>
+
+          <button class="rebuildbtn4" @click="handleModelGeneration">
+            重新生成
+          </button>
+          <button class="savebtn4" @click="downloadModel">保存模型</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp } = Vue;
+
+      window.app = createApp({
+        data() {
+          return {
+            showHomepage: true, //控制主页显示
+            currentPage: 1, //当前页码
+            selectedZodiac: null, //已选生肖
+            isGenerating: false, // 新增状态锁
+            modelLoaded: false,
+            loadingProgress: 0,
+            // 生肖文字标签数据
+            zodiacLabels: [
+              { label: "子鼠", customContent: "a rat" },
+              { label: "丑牛", customContent: "ox" },
+              { label: "寅虎", customContent: "a tiger" },
+              { label: "卯兔", customContent: "a rabbit" },
+              { label: "辰龙", customContent: "a loong" },
+              { label: "巳蛇", customContent: "a snake" },
+              { label: "午马", customContent: "a house" },
+              { label: "未羊", customContent: "a goat" },
+              { label: "申猴", customContent: "a monkey" },
+              { label: "酉鸡", customContent: "a rooster" },
+              { label: "戌狗", customContent: "a dog" },
+              { label: "亥猪", customContent: "a pig" },
+            ],
+            selectedModel: 0,
+            models: [
+              {
+                name: "古风",
+                image: "img/model1.png",
+                description: "Chinese-style",
+              },
+              {
+                name: "朋克",
+                image: "img/model2.png",
+                description: "cyber,sense of tochnology",
+              },
+              {
+                name: "卡通",
+                image: "img/model3.png",
+                description: "cartoon,3D，cute",
+              },
+              {
+                name: "机甲",
+                image: "img/model4.png",
+                description: "mecha",
+              },
+              {
+                name: "洛可可",
+                image: "img/model5.png",
+                description: "recoco style",
+              },
+              {
+                name: "青花瓷",
+                image: "img/model6.png",
+                description: "blue and white porcelain color scheme",
+              },
+            ],
+            generationTasks: [], //存储多个生成任务
+            currentTaskIndex: 0, //当前查看的任务索引
+
+            selectedImageIndex: null, //已选择图片索引
+            modelUrl: null, //3D模型URL
+            threeJSError: null, //Three错误信息
+            threeInitialized: false, //状态标记
+          };
+        },
+        methods: {
+          startBrowsing() {
+            this.showHomepage = false;
+            this.currentPage = 1;
+          },
+          returnToHome() {
+            this.showHomepage = true;
+            this.currentPage = 1;
+          },
+          async nextPage() {
+            if (this.currentPage === 3) {
+              if (this.selectedImageIndex === null) {
+                alert("请先选择一张图片");
+                return;
+              }
+              if (!this.generationTasks[0]?.images?.[this.selectedImageIndex]) {
+                alert("选择的图片无效");
+                return;
+              }
+            }
+            if (this.currentPage === 1 && !this.selectedZodiac) {
+              alert("请先选择生肖");
+              return;
+            }
+            if (this.currentPage === 2 && this.selectedModel === null) {
+              alert("请先选择风格");
+              return;
+            }
+
+            if (this.currentPage === 2) {
+              await this.handleGeneration();
+            }
+
+            if (this.currentPage < 4) this.currentPage++;
+          },
+          async handleGeneration() {
+            try {
+              const promptText = this.generatePromptText();
+              console.log("最终提示词:", promptText); // 新增调试日志
+
+              //创建FormData
+              const formData = new FormData();
+              formData.append("client", "cuz-model");
+              formData.append("prompt", "3d_image");
+              formData.append("ai_sever_host", "127.0.0.1");
+              formData.append("ai_sever_port", "8188");
+              formData.append("prompt_text", promptText);
+
+              // 打印实际发送的表单数据
+              for (var pair of formData.entries()) {
+                console.log(pair[0] + ": " + pair[1]);
+              }
+
+              //发送请求时让axios自动处理headers
+              const response = await axios.post(
+                "http://localhost/api/model/prompt",
+                formData
+              );
+
+              if (!response.data.prompt_id) throw new Error("任务创建失败");
+              this.startPolling(response.data.prompt_id);
+            } catch (error) {
+              console.error("生成失败:", error);
+              alert(`生成失败: ${error.message}`);
+            }
+          },
+
+          generatePromptText() {
+            const zodiac = this.zodiacLabels[this.selectedZodiac - 1];
+            const style = this.models[this.selectedModel].description;
+            // 添加错误处理
+            if (
+              !this.selectedZodiac ||
+              this.selectedZodiac < 1 ||
+              this.selectedZodiac > 12
+            ) {
+              throw new Error("请先选择有效的生肖");
+            }
+
+            const zodiacItem = this.zodiacLabels[this.selectedZodiac - 1];
+            console.log("当前生肖对象:", zodiacItem); // 调试日志
+
+            if (!zodiacItem?.customContent) {
+              throw new Error("生肖配置信息不完整");
+            }
+
+            const styleItem = this.models[this.selectedModel];
+            if (!styleItem?.description) {
+              throw new Error("风格配置信息不完整");
+            }
+            return `${zodiacItem.customContent}，${style}，`;
+          },
+
+          async startPolling(promptId) {
+            const MAX_RETRIES = 20; // 最大重试次数（20次*3秒=1分钟）
+            let retries = 0;
+
+            const checkStatus = async () => {
+              try {
+                const { data } = await axios.get(
+                  "http://localhost/api/model/queue",
+                  {
+                    params: {
+                      ai_sever_host: "127.0.0.1",
+                      ai_sever_port: "8188",
+                      prompt_id: promptId,
+                    },
+                  }
+                );
+
+                console.log("轮询状态:", data); // 新增状态日志
+
+                if (data.status === "finish") {
+                  const images = await this.fetchResultImage(promptId);
+                  this.generationTasks.push({
+                    promptId,
+                    images, // 改为存储多张图片
+                    status: "completed",
+                  });
+                } else if (retries < MAX_RETRIES) {
+                  retries++;
+                  setTimeout(checkStatus, 3000);
+                } else {
+                  throw new Error("生成超时");
+                }
+              } catch (error) {
+                console.error("轮询错误:", error);
+              }
+            };
+
+            checkStatus();
+          },
+
+          // 定义下载模型
+          downloadModel() {
+            if (!this.modelUrl) return;
+
+            const link = document.createElement("a");
+            link.href = this.modelUrl;
+            link.download = "model.glb";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          },
+
+          async fetchResultImage(promptId) {
+            try {
+              // 使用解构后的data变量
+              const { data } = await axios.get("http://localhost/api/model/view", {
+                params: {
+                  frontend: "model",
+                  prompt_id: promptId,
+                  client_id: "cuz-model",
+                  ai_sever_host: "127.0.0.1",
+                  ai_sever_port: "8188",
+                },
+              });
+
+              // 根据实际数据结构调整
+              if (!data?.data) {
+                console.error("无效的响应格式", data);
+                return [];
+              }
+
+              // 直接使用oss_url字段
+              return data.data.map((item) => item.oss_url);
+            } catch (error) {
+              // 更健壮的错误处理
+              console.error("获取图片失败详情:", {
+                message: error.message,
+                config: error.config,
+                response: error.response?.data || "无响应数据",
+              });
+              return [];
+            }
+          },
+
+          cleanupThreeJS() {
+            if (this.renderer) {
+              this.renderer.dispose();
+              this.renderer.forceContextLoss();
+              this.renderer.domElement = null;
+              this.renderer = null;
+            }
+            if (this.controls) {
+              this.controls.dispose();
+            }
+            this.scene = null;
+            this.camera = null;
+          },
+
+          // 新增重试方法
+          retryLoading() {
+            console.log("执行重试操作");
+            this.threeJSError = null;
+
+            if (this.modelUrl) {
+              console.log("重新加载模型");
+              this.loadModel();
+            } else {
+              console.log("重新生成模型");
+              this.handleModelGeneration();
+            }
+          },
+
+          // 修改第三页显示逻辑
+          renderResults() {
+            return `
+
+            `;
+          },
+          prevPage() {
+            if (this.currentPage > 1) this.currentPage--;
+          },
+          handleImageError(event) {
+            event.target.src = "img/default-image.png";
+          },
+          showFullscreen(url) {
+            window.open(url, "_blank");
+          },
+          selectZodiac(index) {
+            // 切换选中状态
+            this.selectedZodiac = this.selectedZodiac === index ? null : index;
+            //console.log('当前选中:', this.selectedZodiac);
+          },
+          // 新增方法
+          handleScroll() {
+            const container = this.$refs.scrollArea;
+            const center = container.clientWidth / 2;
+            const items = container.querySelectorAll(".model-item");
+
+            items.forEach((item, index) => {
+              const rect = item.getBoundingClientRect();
+              const itemCenter =
+                rect.left + rect.width / 2 - container.offsetLeft;
+              if (Math.abs(itemCenter - center) < rect.width / 2) {
+                this.selectedModel = index;
+              }
+            });
+          },
+
+          scrollToModel(index) {
+            const container = this.$refs.scrollArea;
+            const target = container.querySelectorAll(".model-item")[index];
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "center",
+            });
+          },
+          //添加图片选择方法
+          selectImage(index) {
+            console.log("Selected image index:", index);
+            this.selectedImageIndex = index;
+          },
+
+          async handleModelGeneration() {
+            // 显式跳转到第四页
+            this.currentPage = 4;
+
+            if (this.isGenerating) {
+              console.log("已有生成任务进行中");
+              return;
+            }
+
+            try {
+              this.isGenerating = true;
+
+              if (this.selectedImageIndex === null) {
+                throw new Error("请先选择一张图片");
+              }
+
+              const selectedImage =
+                this.generationTasks[0]?.images?.[this.selectedImageIndex];
+              if (!selectedImage) {
+                throw new Error("无效的图片选择");
+              }
+
+              await this.generate3DModel(selectedImage);
+              this.currentPage = 4;
+            } catch (error) {
+              console.error("模型生成失败:", error);
+              this.threeJSError = `模型生成失败: ${error.message}`;
+            } finally {
+              this.isGenerating = false; // 确保始终重置状态
+            }
+          },
+
+          async generate3DModel(imageUrl) {
+            try {
+              console.log("[1/5] 开始生成3D模型，图片URL:", imageUrl);
+              // 新增网络状态检查
+              if (!navigator.onLine) {
+                throw new Error("网络连接不可用");
+              }
+
+              console.log("[2/5] 发起图片获取请求...");
+              const response = await fetch(imageUrl);
+              if (!response.ok)
+                throw new Error(`图片请求失败: ${response.status}`);
+              blob = await response.blob();
+              console.log("[2/5] 图片数据获取成功，类型:", blob.type, imageUrl);
+            } catch (error) {
+              console.error("[ERROR] 步骤2失败：", error);
+              this.threeJSError = "图片数据获取失败，请检查图片URL";
+              throw error; // 确保错误向上传递
+            }
+
+            // 步骤3：构建请求数据（确认字段名）
+            const formData = new FormData();
+            formData.append("client", "cuz-model");
+            formData.append("prompt", "3D_model"); // 修正后的值
+            formData.append("ai_sever_host", "127.0.0.1"); // 固定为IP地址
+            formData.append("ai_sever_port", "8188");
+            formData.append("3d_image", blob, new Date().getTime()); // 关键字段名
+            console.log(
+              "[3/5] 表单数据字段：",
+              formData.get("prompt"),
+              formData.get("3d_image")
+            );
+
+            // 步骤4：发送请求（增加超时和详细日志）
+            try {
+              console.log("[4/5] 发送模型生成请求...");
+              const { data } = await axios.post(
+                "http://localhost/api/model/modelgen",
+                formData,
+                {
+                  headers: {
+                    "Content-Type": "multipart/form-data", // 显式设置内容类型
+                  },
+                  timeout: 15000,
+                }
+              );
+              console.log("[4/5] 服务器响应：", data); // 关键：是否包含prompt_id
+              if (!data.prompt_id) throw new Error("服务器未返回任务ID");
+              await this.pollModelStatus(data.prompt_id); // 进入轮询
+            } catch (error) {
+              console.error(
+                "[ERROR] 步骤4失败：",
+                error.config,
+                error.response
+              );
+              this.threeJSError = "模型生成请求失败，请检查后端服务";
+              throw error;
+            }
+          },
+
+          // 修改 pollModelStatus 方法
+          async pollModelStatus(promptId) {
+            const MAX_ATTEMPTS = 30;
+            console.log("[POLL] 开始轮询，目标prompt_id:", promptId);
+
+            for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+              try {
+                console.log(`[POLL] 第${attempt}次尝试...`);
+
+                // 添加超时和重试逻辑
+                const { data } = await axios.get(
+                  "http://localhost/api/model/queue",
+                  {
+                    params: {
+                      ai_sever_host: "127.0.0.1",
+                      ai_sever_port: "8188",
+                      prompt_id: promptId,
+                    },
+                    timeout: 8000,
+                  }
+                );
+
+                console.log("轮询响应数据:", data);
+
+                if (data.status === "finish") {
+                  console.log("[SUCCESS] 任务完成，获取模型URL");
+                  this.modelUrl = await this.getModelUrl(promptId);
+
+                  // 新增控制台输出
+                  console.log("生成的3D模型URL:", this.modelUrl);
+
+                  // 加载模型到Three.js场景
+                  if (this.modelUrl) {
+                    this.loadModel();
+                    this.threeInitialized = true;
+                  }
+                  return;
+                } else if (data.status === "error") {
+                  throw new Error("后台任务执行失败");
+                }
+
+                await new Promise((resolve) => setTimeout(resolve, 3000));
+              } catch (error) {
+                console.error(`[POLL ERROR] 轮询失败: ${error.message}`);
+                if (attempt === MAX_ATTEMPTS) {
+                  this.threeJSError = "模型生成超时，请稍后重试";
+                  throw new Error("轮询超时");
+                }
+              }
+            }
+          },
+
+          async getModelUrl(promptId) {
+            try {
+              const { data } = await axios.get("http://localhost/api/model/view", {
+                params: {
+                  frontend: "model",
+                  prompt_id: promptId,
+                  client_id: "cuz-model",
+                  ai_sever_host: "127.0.0.1",
+                  ai_sever_port: "8188",
+                },
+              });
+
+              if (!data?.data?.[0]?.oss_url) {
+                throw new Error("无效的响应格式");
+              }
+
+              console.log("model return info", data.data);
+
+              return data.data[0].oss_url;
+            } catch (error) {
+              console.error("获取模型URL失败:", error);
+              throw new Error("无法获取模型地址");
+            }
+          },
+
+          //3D显示
+          initThreeJS() {
+            this.modelLoaded = false; // 重置状态
+
+            console.log("[初始化阶段] 开始初始化Three.js");
+            console.log("当前threeInitialized状态:", this.threeInitialized);
+
+            try {
+              // 检查Three.js核心库
+              if (typeof THREE === "undefined") {
+                throw new Error("Three.js未加载");
+              }
+
+              // 检查依赖组件
+              if (typeof THREE.OrbitControls === "undefined") {
+                throw new Error("OrbitControls未加载");
+              }
+
+              const container = this.$refs.modelContainer;
+              if (!container) {
+                throw new Error("容器元素未找到");
+              }
+
+              // 清理旧场景
+              this.cleanupThreeJS();
+
+              // 初始化新场景
+              this.scene = new THREE.Scene();
+              this.camera = new THREE.PerspectiveCamera(
+                75,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+              );
+
+              // 初始化渲染器
+              this.renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true,
+                physicallyCorrectLights: true, // 启用物理正确光照
+              });
+              this.renderer.shadowMap.enabled = true; // 新增阴影支持
+              this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 柔和阴影
+
+              // 设置渲染器尺寸
+              const setRendererSize = () => {
+                const { clientWidth, clientHeight } = container;
+                this.renderer.setSize(clientWidth, clientHeight);
+                this.camera.aspect = clientWidth / clientHeight;
+                this.camera.updateProjectionMatrix();
+              };
+
+              setRendererSize();
+              container.appendChild(this.renderer.domElement);
+
+              // 初始化控制器
+              this.controls = new THREE.OrbitControls(
+                this.camera,
+                this.renderer.domElement
+              );
+              this.configureControls();
+
+              // 启动动画循环
+              this.startAnimation();
+
+              // 标记初始化完成
+              this.threeInitialized = true;
+              console.log("[初始化成功] threeInitialized已设置为true");
+
+              // 在初始化成功时标记
+              this.threeInitialized = true;
+            } catch (error) {
+              this.threeJSError = `引擎初始化失败: ${error.message}`;
+              this.threeInitialized = false;
+            }
+          },
+
+          configureControls() {
+            // 修改为使用THREE.OrbitControls
+            this.controls = new THREE.OrbitControls(
+              this.camera,
+              this.renderer.domElement
+            );
+            this.controls.enableDamping = true;
+            this.controls.dampingFactor = 0.05;
+            this.controls.screenSpacePanning = true;
+            this.controls.maxPolarAngle = Math.PI / 2;
+            this.controls.minDistance = 0.5;
+            this.controls.maxDistance = 10;
+          },
+
+          startAnimation() {
+            const animate = () => {
+              if (this.renderer) {
+                requestAnimationFrame(animate);
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+              }
+            };
+            animate();
+          },
+
+          cleanupThreeJS() {
+            // 清理渲染器
+            if (this.renderer) {
+              this.renderer.dispose();
+              this.renderer.forceContextLoss();
+              const container = this.$refs.modelContainer;
+              if (container) {
+                container.removeChild(this.renderer.domElement);
+              }
+              this.renderer = null;
+            }
+
+            // 清理控制器
+            if (this.controls) {
+              this.controls.dispose();
+              this.controls = null;
+            }
+
+            // 清理场景
+            if (this.scene) {
+              while (this.scene.children.length > 0) {
+                this.scene.remove(this.scene.children[0]);
+              }
+              this.scene = null;
+            }
+
+            // 清理相机
+            this.camera = null;
+
+            console.log("Three.js资源清理完成");
+          },
+
+          onWindowResize() {
+            const container = this.$refs.modelContainer;
+            if (!container || !this.renderer || !this.camera) return;
+
+            // 使用防抖优化性能
+            clearTimeout(this.resizeTimer);
+            this.resizeTimer = setTimeout(() => {
+              const { clientWidth, clientHeight } = container;
+              this.camera.aspect = clientWidth / clientHeight;
+              this.camera.updateProjectionMatrix();
+              this.renderer.setSize(clientWidth, clientHeight);
+            }, 200);
+          },
+
+          loadModel() {
+            this.modelLoaded = false; // 开始加载时重置
+
+            try {
+              if (!this.threeInitialized) {
+                throw new Error("3D引擎未初始化");
+              }
+
+              if (!this.modelUrl) {
+                throw new Error("模型URL为空");
+              }
+
+              // 在loadModel方法中找到模型加载完成的回调
+              new THREE.GLTFLoader().load(
+                this.modelUrl,
+                (gltf) => {
+                  if (!this.scene) return;
+
+                  this.clearScene();
+                  const model = gltf.scene;
+
+                  // 添加模型到场景
+                  this.scene.add(model);
+
+                  // 计算模型边界框和中心点
+                  const bbox = new THREE.Box3().setFromObject(model);
+                  const center = bbox.getCenter(new THREE.Vector3());
+                  const size = bbox.getSize(new THREE.Vector3());
+
+                  // 创建六个面光源配置
+                  const faceLightsConfig = [
+                    {
+                      // 前
+                      position: new THREE.Vector3(0, 0, size.z),
+                      color: 0xffffff, // 白光
+                      intensity: 5,
+                      distance: 0 ,
+                      decay: 2,
+                    },
+                    {
+                      // 后
+                      position: new THREE.Vector3(0, 0, -size.z),
+                      color: 0xffffff, // 白宫
+                      intensity: 5,
+                      distance: 0 ,
+                      decay: 2,
+                    },
+                    {
+                      // 左
+                      position: new THREE.Vector3(-size.x, 0, 0),
+                      color: 0xffffff, // 白宫
+                      intensity: 5,
+                      distance: 0 ,
+                      decay: 2,
+                    },{
+                      // 右
+                      position: new THREE.Vector3(size.x, 0, 0),
+                      color: 0xffffff, // 白宫
+                      intensity: 5,
+                      distance: 0 ,
+                      decay: 2,
+                    },
+                  ];
+
+                  // 创建并添加六个面光源
+                  faceLightsConfig.forEach((config) => {
+                    const light = new THREE.PointLight(
+                      config.color,
+                      config.intensity,
+                      config.distance, // 衰减距离
+                      config.decay // 衰减系数
+                    );
+                    light.position.copy(center.clone().add(config.position));
+                    light.castShadow = true; // 启用阴影投射
+
+                    // 添加辅助线框（调试用）
+                    //const helper = new THREE.PointLightHelper(light, 5);
+                    //this.scene.add(helper);
+
+                    this.scene.add(light);
+                  });
+
+                  // 调整相机位置
+                  this.camera.position.set(
+                    center.x,
+                    center.y,
+                    size.length() * 1.5
+                  );
+                  this.controls.target.copy(center);
+
+                  console.log("模型加载成功");
+                  this.modelLoaded = true;
+                },
+                undefined,
+                (error) => {
+                  this.threeJSError = `模型加载失败: ${error.message}`;
+                  this.modelLoaded = false;
+                }
+              );
+            } catch (error) {
+              console.error("模型加载错误:", error);
+              this.threeJSError = error.message;
+            }
+          },
+
+          // 新增场景清理方法
+          clearScene() {
+            // 增加安全检查
+            if (!this.scene || !this.scene.isScene) {
+              console.warn("场景未初始化或已被销毁");
+              return;
+            }
+
+            // 安全移除所有子对象
+            while (this.scene.children.length > 0) {
+              const child = this.scene.children[0];
+              if (child.geometry) child.geometry.dispose();
+              if (child.material) child.material.dispose();
+              this.scene.remove(child);
+            }
+          },
+
+          // 新增相机调整方法
+          adjustCamera(model) {
+            const bbox = new THREE.Box3().setFromObject(model);
+            const center = bbox.getCenter(new THREE.Vector3());
+            const size = bbox.getSize(new THREE.Vector3());
+
+            this.camera.position.z = size.length() * 1.5;
+            this.camera.lookAt(center);
+            this.controls.target.copy(center);
+          },
+        },
+
+        mounted() {
+          console.log("当前响应式数据：", this.$data);
+          window.addEventListener("resize", this.onWindowResize);
+        },
+
+        beforeUnmount() {
+          // 彻底清理资源
+          this.cleanupThreeJS();
+        },
+
+        watch: {
+          currentPage(newVal) {
+            if (newVal === 4) {
+              this.$nextTick(() => {
+                // 先初始化引擎
+                this.initThreeJS();
+
+                // 延迟加载模型确保初始化完成
+                setTimeout(() => {
+                  if (this.modelUrl && this.threeInitialized) {
+                    this.loadModel();
+                  }
+                }, 500);
+              });
+            }
+          },
+          modelUrl(newVal) {
+            if (newVal && this.threeInitialized) {
+              this.loadModel();
+            }
+          },
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
